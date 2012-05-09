@@ -1,42 +1,31 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BundlerFocalExtractor", "BundlerFocalExtractor\script\BundlerFocalExtractor.vcproj", "{98D423B7-D314-45A0-8B20-B2FABAC59B6F}"
-	ProjectSection(ProjectDependencies) = postProject
-		{78E87D71-9E45-4BE9-A51E-2615A1DE7A82} = {78E87D71-9E45-4BE9-A51E-2615A1DE7A82}
-		{F860F7C3-C1A3-483D-A664-1EEE89E8533E} = {F860F7C3-C1A3-483D-A664-1EEE89E8533E}
-		{697686E8-AB84-402D-BDEA-035E81A3B4A7} = {697686E8-AB84-402D-BDEA-035E81A3B4A7}
-	EndProjectSection
-EndProject
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dependencies", "Dependencies", "{F922E515-A234-49C4-BBD2-009024C84083}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Exif", "Dependencies\Exif\script\exif.vcproj", "{78E87D71-9E45-4BE9-A51E-2615A1DE7A82}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Jpeg", "Dependencies\jpeg\script\jpeg.vcproj", "{F860F7C3-C1A3-483D-A664-1EEE89E8533E}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tinyxml", "Dependencies\tinyxml\script\tinyxml.vcproj", "{697686E8-AB84-402D-BDEA-035E81A3B4A7}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BundlerViewer", "BundlerViewer\script\BundlerViewer.vcproj", "{8DEDE164-6326-41D8-A5CF-D60B7F967D45}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BundlerToTracking", "BundlerToTracking\script\BundlerToTracking.vcproj", "{2DAE4C75-7E30-48E9-AE2F-5BC8AFF35A26}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BundlerMatcher", "BundlerMatcher\script\BundlerMatcher.vcproj", "{7DA855D4-9833-49D3-8BFA-4B0D0B1DBAD8}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BundlerCleaner", "BundlerCleaner\script\BundlerCleaner.vcproj", "{9E7AE2E4-FE49-4F02-9343-EFE8DC97AB69}"
-	ProjectSection(ProjectDependencies) = postProject
-		{FF716CB1-E905-466E-8E0B-29A8D25DEDF0} = {FF716CB1-E905-466E-8E0B-29A8D25DEDF0}
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BundlerParser", "BundlerParser\script\BundlerParser.vcproj", "{FF716CB1-E905-466E-8E0B-29A8D25DEDF0}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BundlerToPly", "BundlerToPly\script\BundlerToPly.vcproj", "{15D5577B-D544-4288-8044-09F0CF645C8D}"
-	ProjectSection(ProjectDependencies) = postProject
-		{FF716CB1-E905-466E-8E0B-29A8D25DEDF0} = {FF716CB1-E905-466E-8E0B-29A8D25DEDF0}
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tracking", "Tracking", "{FBFB9A38-5BCD-4D1A-80D7-548FAA7C2C34}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SiftGPU", "Dependencies\SiftGPU\script\SiftGPU.vcproj", "{7E0E0508-3D43-4559-A66D-127C975EF30B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BundlerFocalExtractor", "BundlerFocalExtractor\script\BundlerFocalExtractor.vcxproj", "{98D423B7-D314-45A0-8B20-B2FABAC59B6F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "exif", "Dependencies\Exif\script\exif.vcxproj", "{78E87D71-9E45-4BE9-A51E-2615A1DE7A82}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jpeg", "Dependencies\jpeg\script\jpeg.vcxproj", "{F860F7C3-C1A3-483D-A664-1EEE89E8533E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tinyxml", "Dependencies\tinyxml\script\tinyxml.vcxproj", "{697686E8-AB84-402D-BDEA-035E81A3B4A7}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BundlerViewer", "BundlerViewer\script\BundlerViewer.vcxproj", "{8DEDE164-6326-41D8-A5CF-D60B7F967D45}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BundlerToTracking", "BundlerToTracking\script\BundlerToTracking.vcxproj", "{2DAE4C75-7E30-48E9-AE2F-5BC8AFF35A26}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BundlerMatcher", "BundlerMatcher\script\BundlerMatcher.vcxproj", "{7DA855D4-9833-49D3-8BFA-4B0D0B1DBAD8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BundlerCleaner", "BundlerCleaner\script\BundlerCleaner.vcxproj", "{9E7AE2E4-FE49-4F02-9343-EFE8DC97AB69}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BundlerParser", "BundlerParser\script\BundlerParser.vcxproj", "{FF716CB1-E905-466E-8E0B-29A8D25DEDF0}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BundlerToPly", "BundlerToPly\script\BundlerToPly.vcxproj", "{15D5577B-D544-4288-8044-09F0CF645C8D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SiftGPU_CUDA_Enabled", "..\SiftGPU\msvc\SiftGPU\SiftGPU_CUDA_Enabled.vcxproj", "{9252E247-4FE2-4929-BD5D-C2FA16EFD656}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -107,25 +96,16 @@ Global
 		{15D5577B-D544-4288-8044-09F0CF645C8D}.Release|Win32.ActiveCfg = Release|Win32
 		{15D5577B-D544-4288-8044-09F0CF645C8D}.Release|Win32.Build.0 = Release|Win32
 		{15D5577B-D544-4288-8044-09F0CF645C8D}.Release|x64.ActiveCfg = Release|Win32
-		{7E0E0508-3D43-4559-A66D-127C975EF30B}.Debug|Win32.ActiveCfg = Debug|Win32
-		{7E0E0508-3D43-4559-A66D-127C975EF30B}.Debug|Win32.Build.0 = Debug|Win32
-		{7E0E0508-3D43-4559-A66D-127C975EF30B}.Debug|x64.ActiveCfg = Debug|x64
-		{7E0E0508-3D43-4559-A66D-127C975EF30B}.Debug|x64.Build.0 = Debug|x64
-		{7E0E0508-3D43-4559-A66D-127C975EF30B}.Release|Win32.ActiveCfg = Release|Win32
-		{7E0E0508-3D43-4559-A66D-127C975EF30B}.Release|Win32.Build.0 = Release|Win32
-		{7E0E0508-3D43-4559-A66D-127C975EF30B}.Release|x64.ActiveCfg = Release|x64
-		{7E0E0508-3D43-4559-A66D-127C975EF30B}.Release|x64.Build.0 = Release|x64
+		{9252E247-4FE2-4929-BD5D-C2FA16EFD656}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9252E247-4FE2-4929-BD5D-C2FA16EFD656}.Debug|Win32.Build.0 = Debug|Win32
+		{9252E247-4FE2-4929-BD5D-C2FA16EFD656}.Debug|x64.ActiveCfg = Debug|x64
+		{9252E247-4FE2-4929-BD5D-C2FA16EFD656}.Debug|x64.Build.0 = Debug|x64
+		{9252E247-4FE2-4929-BD5D-C2FA16EFD656}.Release|Win32.ActiveCfg = Release|Win32
+		{9252E247-4FE2-4929-BD5D-C2FA16EFD656}.Release|Win32.Build.0 = Release|Win32
+		{9252E247-4FE2-4929-BD5D-C2FA16EFD656}.Release|x64.ActiveCfg = Release|x64
+		{9252E247-4FE2-4929-BD5D-C2FA16EFD656}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{78E87D71-9E45-4BE9-A51E-2615A1DE7A82} = {F922E515-A234-49C4-BBD2-009024C84083}
-		{F860F7C3-C1A3-483D-A664-1EEE89E8533E} = {F922E515-A234-49C4-BBD2-009024C84083}
-		{697686E8-AB84-402D-BDEA-035E81A3B4A7} = {F922E515-A234-49C4-BBD2-009024C84083}
-		{7E0E0508-3D43-4559-A66D-127C975EF30B} = {F922E515-A234-49C4-BBD2-009024C84083}
-		{9E7AE2E4-FE49-4F02-9343-EFE8DC97AB69} = {FBFB9A38-5BCD-4D1A-80D7-548FAA7C2C34}
-		{15D5577B-D544-4288-8044-09F0CF645C8D} = {FBFB9A38-5BCD-4D1A-80D7-548FAA7C2C34}
-		{2DAE4C75-7E30-48E9-AE2F-5BC8AFF35A26} = {FBFB9A38-5BCD-4D1A-80D7-548FAA7C2C34}
 	EndGlobalSection
 EndGlobal

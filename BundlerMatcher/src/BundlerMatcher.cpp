@@ -23,6 +23,7 @@
 #include "BundlerMatcher.h"
 
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <string>
 #include <sstream>
@@ -64,15 +65,33 @@ BundlerMatcher::BundlerMatcher(float matchThreshold, int firstOctave, bool binar
 		mIsInitialized = false;
 
 	if (mIsInitialized)
-		mSift->AllocatePyramid(1600, 1600);
+		mSift->AllocatePyramid(12800, 12800);
 
-	mMatcher = new SiftMatchGPU(4096);
+	mMatcher = new SiftMatchGPU(8192);
 }
 
 BundlerMatcher::~BundlerMatcher()
 {
 	//DevIL shutdown
 	ilShutDown();
+}
+
+bool BundlerMatcher::keyAsciiExists(const std::string& imagefile)
+{
+	std::stringstream filepath;
+	filepath << mInputPath << imagefile.substr(0, imagefile.size()-4) << ".key";
+
+	std::ifstream keyfile(filepath.str());
+	return keyfile.good();
+}
+
+bool BundlerMatcher::keyBinaryExists(const std::string& imagefile)
+{
+	std::stringstream filepath;
+	filepath << mInputPath << imagefile.substr(0, imagefile.size()-4) << ".key.bin";
+
+	std::ifstream keyfile(filepath.str());
+	return keyfile.good();
 }
 
 void BundlerMatcher::open(const std::string& inputPath, const std::string& inputFilename, const std::string& outMatchFilename)
@@ -92,25 +111,35 @@ void BundlerMatcher::open(const std::string& inputPath, const std::string& input
 	}
 	
 	//Sift Feature Extraction
+	//Estimate total RAM usage
+	long featuresum = 0;
 	for (unsigned int i=0; i<mFilenames.size(); ++i)
-	{
-		int percent = (int)(((i+1)*100.0f) / (1.0f*mFilenames.size()));		
-		int nbFeature = extractSiftFeature(i);
-		clearScreen();
-		std::cout << "[Extracting Sift Feature : " << percent << "%] - ("<<i+1<<"/"<<mFilenames.size()<<", #"<< nbFeature <<" features)";
+	{	
+		int percent = (int)(((i+1)*100.0f) / (1.0f*mFilenames.size()));
+		if(!(keyAsciiExists(mFilenames[i]) || keyBinaryExists(mFilenames[i])))
+		{				
+			int nbFeature = extractSiftFeature(i);
+			featuresum += nbFeature;
+			int totalRAM = (featuresum*mFilenames.size())/((i+1)*2097152);
+			saveAsciiKeyFile(i);
+			if (mBinaryKeyFileWritingEnabled)
+				saveBinaryKeyFile(i);
+			clearScreen();
+			std::cout << "[Saving Sift Key files: ("<<totalRAM<< "GB) "<< percent << "%] - ("<<i+1<<"/"<<mFilenames.size()<<") #" << nbFeature <<" features";
+		}
+		else
+		{
+			//Populate internal table with existing key file data
+			//TODO: What about binary key files ?
+			int nbFeature = readAsciiKeyFile(i);
+			featuresum += nbFeature;
+			int totalRAM = (featuresum*mFilenames.size())/((i+1)*2097152);
+			clearScreen();
+			std::cout << "[Reading Sift Key files: ("<<totalRAM<< "GB) "<< percent << "%] - ("<<i+1<<"/"<<mFilenames.size()<<") #" << nbFeature <<" features";
+		}
 	}
 	clearScreen();
 	std::cout << "[Sift Feature extracted]"<<std::endl;	
-
-	for (unsigned int i=0; i<mFilenames.size(); ++i)
-	{
-		int percent = (int)(((i+1)*100.0f) / (1.0f*mFilenames.size()));	
-		saveAsciiKeyFile(i);
-		if (mBinaryKeyFileWritingEnabled)
-			saveBinaryKeyFile(i);
-		clearScreen();
-		std::cout << "[Saving Sift Key files: " << percent << "%] - ("<<i+1<<"/"<<mFilenames.size()<<")";
-	}
 	saveVector();
 	clearScreen();		
 	std::cout << "[Sift Key files saved]"<<std::endl;	
@@ -221,6 +250,7 @@ int BundlerMatcher::extractSiftFeature(int fileIndex)
 			mSift->GetFeatureVector(&keys[0], &descriptors[0]);
 
 			//Save Feature in RAM
+			//This can get filled up if the number of images is large
 			mFeatureInfos.push_back(FeatureInfo(w, h, keys, descriptors));
 
 			nbFeatureFound = num;
@@ -253,11 +283,16 @@ void BundlerMatcher::matchSiftFeature(int fileIndexA, int fileIndexB)
 	SiftKeyPoints pointsB           = mFeatureInfos[fileIndexB].points;
 	SiftKeyDescriptors descriptorsB = mFeatureInfos[fileIndexB].descriptors;
 
+	int max_size = std::max((int) pointsA.size(),(int) pointsB.size());
+
 	mMatcher->SetDescriptors(0, (int) pointsA.size(), &descriptorsA[0]);
 	mMatcher->SetDescriptors(1, (int) pointsB.size(), &descriptorsB[0]);
 	
-	int (*matchBuffer)[2] = new int[pointsA.size()][2];
-	int nbMatch = mMatcher->GetSiftMatch((int)pointsA.size(), matchBuffer, mMatchThreshold);
+	int (*matchBuffer)[2] = new int[max_size][2];
+
+	//This stage can be farmed off to a remote GPU
+	mMatcher->SetMaxSift(max_size);
+	int nbMatch = mMatcher->GetSiftMatch(max_size, matchBuffer, mMatchThreshold);
 
 	//Save Match in RAM
 	std::vector<Match> matches(nbMatch);
@@ -265,6 +300,69 @@ void BundlerMatcher::matchSiftFeature(int fileIndexA, int fileIndexB)
 		matches[i] = Match(matchBuffer[i][0], matchBuffer[i][1]);
 	mMatchInfos.push_back(MatchInfo(fileIndexA, fileIndexB, matches));
 	delete[] matchBuffer;
+}
+
+int BundlerMatcher::readAsciiKeyFile(int fileIndex)
+{
+	std::stringstream keyfilepath;
+	keyfilepath << mInputPath << mFilenames[fileIndex].substr(0, mFilenames[fileIndex].size()-4) << ".key";
+
+	std::stringstream filepath;
+	filepath << mInputPath << mFilenames[fileIndex];
+
+	std::string tmp = filepath.str();
+	char* filename = &tmp[0];
+
+	int num = 0; 
+	int descCount = 0;
+
+	if(ilLoadImage(filename))
+	{
+		int w = ilGetInteger(IL_IMAGE_WIDTH);
+		int h = ilGetInteger(IL_IMAGE_HEIGHT);
+
+		std::ifstream input(keyfilepath.str().c_str());
+		if (input.is_open())
+		{
+			
+			input >> num;
+			input >> descCount;
+
+			if(descCount!=128)
+			{
+				std::cout << "Error while reading key file, descriptor count invalid" << std::endl;
+				return -1;
+			}
+
+			SiftKeyDescriptors descriptors(128*num);
+			SiftKeyPoints keys(num);
+
+			FeatureInfo info(w, h, keys, descriptors);
+
+			float* pd = &info.descriptors[0];
+
+			for (unsigned int i=0; i<num; ++i)
+			{
+				//in y, x, scale, orientation order
+				input >> std::setprecision(2) >> info.points[i].y ;
+				input >> std::setprecision(2) >> info.points[i].x ;
+				input >> std::setprecision(3) >> info.points[i].s ;
+				input >> std::setprecision(3) >> info.points[i].o ;
+				for (int k=0; k<128; ++k, ++pd)
+				{
+					unsigned int feature;
+					input >> feature;
+					*pd = (((float)feature)/512.0f)-0.5;		
+				}
+			}
+
+			mFeatureInfos.push_back(info);
+		}
+
+		input.close();
+	}
+
+	return num;
 }
 
 void BundlerMatcher::saveAsciiKeyFile(int fileIndex)

@@ -80,6 +80,7 @@ class BundlerMatcher
 		int extractSiftFeature(int fileIndex);
 		void saveAsciiKeyFile(int fileIndex);
 		void saveBinaryKeyFile(int fileIndex);
+		int readAsciiKeyFile(int fileIndex);
 
 		//Feature matching
 		void matchSiftFeature(int fileIndexA, int fileIndexB);	
@@ -87,6 +88,8 @@ class BundlerMatcher
 
 		//Helpers
 		bool parseListFile(const std::string& filename);
+		bool keyAsciiExists(const std::string& imagefile);
+		bool keyBinaryExists(const std::string& imagefile);
 		void clearScreen();
 		void saveMatrix();
 		void saveVector();
