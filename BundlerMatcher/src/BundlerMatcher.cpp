@@ -35,7 +35,7 @@
 
 #include <IL/il.h>
 
-BundlerMatcher::BundlerMatcher(float matchThreshold, int firstOctave, bool binaryWritingEnabled, bool sequenceMatching, int sequenceMatchingLength)
+BundlerMatcher::BundlerMatcher(float distanceThreshold, float ratioThreshold, int firstOctave, bool binaryWritingEnabled, bool sequenceMatching, int sequenceMatchingLength)
 {
 	mBinaryKeyFileWritingEnabled = binaryWritingEnabled;
 	mSequenceMatchingEnabled     = sequenceMatching;
@@ -50,7 +50,8 @@ BundlerMatcher::BundlerMatcher(float matchThreshold, int firstOctave, bool binar
 	std::cout << "[Initialization]";
 
 	mIsInitialized = true;
-	mMatchThreshold = matchThreshold; //0.0 means few match and 1.0 many match
+	mDistanceThreshold = distanceThreshold; //0.0 means few match and 1.0 many match (0.0-infinity)
+	mRatioThreshold = ratioThreshold; //0.1 means few matches and 1.0 has no effect (0.1-1.0)
 
 	char fo[10];
 	sprintf(fo, "%d", firstOctave);
@@ -292,7 +293,7 @@ void BundlerMatcher::matchSiftFeature(int fileIndexA, int fileIndexB)
 
 	//This stage can be farmed off to a remote GPU
 	mMatcher->SetMaxSift(max_size);
-	int nbMatch = mMatcher->GetSiftMatch(max_size, matchBuffer, mMatchThreshold);
+	int nbMatch = mMatcher->GetSiftMatch(max_size, matchBuffer, mDistanceThreshold, mRatioThreshold);
 
 	//Save Match in RAM
 	std::vector<Match> matches(nbMatch);

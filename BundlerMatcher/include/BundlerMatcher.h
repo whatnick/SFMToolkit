@@ -68,7 +68,7 @@ struct FeatureInfo
 class BundlerMatcher
 {
 	public:
-		BundlerMatcher(float matchThreshold, int firstOctave = 1, bool binaryWritingEnabled = false, bool sequenceMatching = false, int sequenceMatchingLength = 5);
+		BundlerMatcher(float distanceThreshold, float ratioThreshold, int firstOctave = 1, bool binaryWritingEnabled = false, bool sequenceMatching = false, int sequenceMatchingLength = 5);
 		~BundlerMatcher();
 		 
 		//load list.txt and output gpu.matches.txt + one key file per pictures
@@ -101,7 +101,8 @@ public:
 		SiftGPU*                 mSift;
 		SiftMatchGPU*            mMatcher;
 		//int                      mMatchBuffer[4096][2];
-		float                    mMatchThreshold;
+		float                    mDistanceThreshold;
+		float					 mRatioThreshold;
 		std::string              mInputPath;
 
 		std::vector<std::string> mFilenames;    //N images
