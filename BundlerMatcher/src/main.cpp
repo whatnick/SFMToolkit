@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 {
 	if (argc < 7)
 	{
-		std::cout << "Usage: " << argv[0] << " <inputPath> <list.txt> <outfile matches> <matchThreshold> <firstOctave>" <<std::endl;
+		std::cout << "Usage: " << argv[0] << " <inputPath> <list.txt> <outfile matches> <distanceThreshold> <ratioThreshold> <firstOctave>" <<std::endl;
 		std::cout << "<distanceThreshold> : 0.0 means few match and 1.0 many match (float)" <<std::endl;
 		std::cout << "<ratioThreshold> : 0.0 means few match and 1.0 many match (float)" <<std::endl;
 		std::cout << "<firstOctave>: specify on which octave start sampling (int)" <<std::endl;
@@ -35,6 +35,8 @@ int main(int argc, char* argv[])
 		std::cout << "	- bin: generate binary files (needed for Augmented Reality tracking)" << std::endl;
 		std::cout << "	- sequence NUMBER: matching optimized for video sequence" << std::endl;
 		std::cout << "		-> example: sequence 3 (will match image N with N+1,N+2,N+3)" <<std::endl;
+		std::cout << "  - tile NUMBER: break image up in NUMBER of tiles in Width and Height" << std::endl;
+		std::cout << "      -> example: tile 2 (will divide image into 4 tiles)" << std::endl;
 		std::cout << "Example: " << argv[0] << " your_folder/ list.txt gpu.matches.txt 0.6 0.8 1" << std::endl;
 
 		return -1;
@@ -43,6 +45,8 @@ int main(int argc, char* argv[])
 	bool binnaryWritingEnabled  = false;
 	bool sequenceMatching       = false;
 	int  sequenceMatchingLength = 0;
+	bool tileMatching = false;
+	int tileNum = 1;
 
 	for (int i=1; i<argc; ++i)
 	{
@@ -59,9 +63,20 @@ int main(int argc, char* argv[])
 				i++;
 			}
 		}
+		else if (current == "tile")
+		{
+			if (i+1<argc)
+			{				
+				tileNum = atoi(argv[i+1]);
+				if (tileNum > 1)
+					tileMatching = true;
+				i++;
+			}
+		}
 	}
 
-	BundlerMatcher matcher((float) atof(argv[4]),(float) atof(argv[5]), atoi(argv[6]), binnaryWritingEnabled, sequenceMatching, sequenceMatchingLength);
+	BundlerMatcher matcher((float) atof(argv[4]),(float) atof(argv[5]), atoi(argv[6]), binnaryWritingEnabled,
+		sequenceMatching, sequenceMatchingLength, tileMatching, tileNum);
 	matcher.open(std::string(argv[1]), std::string(argv[2]), std::string(argv[3]));
 	
 	return 0;

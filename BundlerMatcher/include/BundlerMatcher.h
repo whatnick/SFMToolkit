@@ -68,7 +68,9 @@ struct FeatureInfo
 class BundlerMatcher
 {
 	public:
-		BundlerMatcher(float distanceThreshold, float ratioThreshold, int firstOctave = 1, bool binaryWritingEnabled = false, bool sequenceMatching = false, int sequenceMatchingLength = 5);
+		BundlerMatcher(float distanceThreshold, float ratioThreshold, int firstOctave = 1,
+			bool binaryWritingEnabled = false, bool sequenceMatching = false, int sequenceMatchingLength = 5,
+			bool tileMatching = false, int tileNum = 1);
 		~BundlerMatcher();
 		 
 		//load list.txt and output gpu.matches.txt + one key file per pictures
@@ -98,6 +100,8 @@ public:
 		bool                     mBinaryKeyFileWritingEnabled;
 		bool                     mSequenceMatchingEnabled;
 		int                      mSequenceMatchingLength;
+		bool					 mTiledMatchingEnabled;
+		int						 mTileNum;
 		SiftGPU*                 mSift;
 		SiftMatchGPU*            mMatcher;
 		//int                      mMatchBuffer[4096][2];

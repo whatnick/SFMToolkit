@@ -35,11 +35,14 @@
 
 #include <IL/il.h>
 
-BundlerMatcher::BundlerMatcher(float distanceThreshold, float ratioThreshold, int firstOctave, bool binaryWritingEnabled, bool sequenceMatching, int sequenceMatchingLength)
+BundlerMatcher::BundlerMatcher(float distanceThreshold, float ratioThreshold, int firstOctave, bool binaryWritingEnabled,
+	bool sequenceMatching, int sequenceMatchingLength, bool tileMatching, int tileNum)
 {
 	mBinaryKeyFileWritingEnabled = binaryWritingEnabled;
 	mSequenceMatchingEnabled     = sequenceMatching;
 	mSequenceMatchingLength      = sequenceMatchingLength;
+	mTiledMatchingEnabled = tileMatching;
+	mTileNum = tileNum;
 
 	//DevIL init
 	ilInit();
@@ -241,25 +244,59 @@ int BundlerMatcher::extractSiftFeature(int fileIndex)
 		int h = ilGetInteger(IL_IMAGE_HEIGHT);
 		int format = ilGetInteger(IL_IMAGE_FORMAT);
 
-		if (mSift->RunSIFT(w, h, ilGetData(), format, GL_UNSIGNED_BYTE))
+		int wtile = w/mTileNum;
+		int htile = h/mTileNum;
+
+		SiftKeyDescriptors all_descriptors;
+		SiftKeyPoints all_keys;
+
+		for(int woff = 0; woff < w; woff+=wtile)
 		{
-			int num = mSift->GetFeatureNum();
+			for(int hoff = 0; hoff < h; hoff+=htile)
+			{
 
-			SiftKeyDescriptors descriptors(128*num);
-			SiftKeyPoints keys(num);
+				//If the image is too large use ilCopyPixels to internal buffers
+				//to copy subset of images to CPU RAM and call RunSIFT in a loop
+				//which does not choke the Graphics RAM
+				ILubyte* data = (ILubyte*)malloc(wtile*htile*sizeof(ILubyte));
+				ilCopyPixels(woff,hoff,0,wtile,htile,1,IL_LUMINANCE,IL_UNSIGNED_BYTE,data);
 
-			mSift->GetFeatureVector(&keys[0], &descriptors[0]);
+				if (mSift->RunSIFT(wtile, htile, data, IL_LUMINANCE, GL_UNSIGNED_BYTE))
+				{
+					int num = mSift->GetFeatureNum();
 
-			//Save Feature in RAM
-			//This can get filled up if the number of images is large
-			mFeatureInfos.push_back(FeatureInfo(w, h, keys, descriptors));
+					if(num>0)
+					{
+						SiftKeyDescriptors descriptors(128*num);
+						SiftKeyPoints keys(num);
 
-			nbFeatureFound = num;
+						mSift->GetFeatureVector(&keys[0], &descriptors[0]);
+
+						if(nbFeatureFound == -1) nbFeatureFound = num;
+						else nbFeatureFound += num;
+
+						for(int i=0;i<keys.size();i++)
+						{
+							keys[i].x+=woff;
+							keys[i].y+=hoff;
+						}
+
+						all_descriptors.insert(all_descriptors.end(),descriptors.begin(),descriptors.end());
+						all_keys.insert(all_keys.end(),keys.begin(),keys.end());
+					}
+				}
+				else
+				{
+					extracted = false;
+				}
+
+				free(data);
+			}
 		}
-		else
-		{
-			extracted = false;
-		}
+
+		//Save Feature in RAM
+		//This can get filled up if the number of images is large
+		mFeatureInfos.push_back(FeatureInfo(w, h, all_keys, all_descriptors));
 	}
 	else
 	{
