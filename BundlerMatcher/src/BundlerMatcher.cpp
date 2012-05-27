@@ -36,13 +36,14 @@
 #include <IL/il.h>
 
 BundlerMatcher::BundlerMatcher(float distanceThreshold, float ratioThreshold, int firstOctave, bool binaryWritingEnabled,
-	bool sequenceMatching, int sequenceMatchingLength, bool tileMatching, int tileNum)
+	bool sequenceMatching, int sequenceMatchingLength, bool tileMatching, int tileNum, bool pairsMatchingEnabled)
 {
 	mBinaryKeyFileWritingEnabled = binaryWritingEnabled;
 	mSequenceMatchingEnabled     = sequenceMatching;
 	mSequenceMatchingLength      = sequenceMatchingLength;
 	mTiledMatchingEnabled = tileMatching;
 	mTileNum = tileNum;
+	mPairedMatchingEnabled = pairsMatchingEnabled;
 
 	//DevIL init
 	ilInit();
@@ -98,7 +99,8 @@ bool BundlerMatcher::keyBinaryExists(const std::string& imagefile)
 	return keyfile.good();
 }
 
-void BundlerMatcher::open(const std::string& inputPath, const std::string& inputFilename, const std::string& outMatchFilename)
+void BundlerMatcher::open(const std::string& inputPath, const std::string& inputFilename, const std::string& outMatchFilename, 
+	const std::string& pairsFilename)
 {
 	mInputPath = inputPath;
 
@@ -112,6 +114,15 @@ void BundlerMatcher::open(const std::string& inputPath, const std::string& input
 	{
 		std::cout << "Error : can not open file : " <<inputFilename.c_str() <<std::endl;
 		return;	
+	}
+
+	if (mPairedMatchingEnabled)
+	{
+		if(!parsePairsFile(pairsFilename))
+		{
+			std::cout << "Error : can not open file : " <<pairsFilename.c_str() <<std::endl;
+			return;	
+		}
 	}
 	
 	//Sift Feature Extraction
@@ -180,6 +191,19 @@ void BundlerMatcher::open(const std::string& inputPath, const std::string& input
 			}
 		}
 	}
+	else if(mPairedMatchingEnabled)//pair-wise matching based on GPS location of photos and camera orientation
+	{
+		std::cout << "[Pair-wise matching enabled: using " << mPairs.size() << " pairs]" << std::endl;
+		for(unsigned int i=0;i <mPairs.size(); ++i)
+		{
+			unsigned int indexA = mPairs[i].first;
+			unsigned int indexB = mPairs[i].second;
+			clearScreen();
+			int percent = (int) (i*100.0f / mPairs.size()*1.0f);
+			std::cout << "[Matching Sift Feature : " << percent << "%] - (" << indexA << "/" << indexB << ")";
+			matchSiftFeature(indexA, indexB);
+		}
+	}
 	else //classic quadratic matching
 	{
 		int maxIterations = (int) mFilenames.size()*((int) mFilenames.size()-1)/2; // Sum(1 -> n) = n(n-1)/2
@@ -217,6 +241,25 @@ bool BundlerMatcher::parseListFile(const std::string& filename)
 			std::getline(input, line);
 			if (line != "")
 				mFilenames.push_back(line);
+		}
+	}
+	input.close();
+
+	return true;
+}
+
+bool BundlerMatcher::parsePairsFile(const std::string& filename)
+{
+	std::ifstream input(filename.c_str());
+	if (input.is_open())
+	{
+		unsigned int right,left;
+		while(!input.eof())
+		{
+			input >> right;
+			input >> left;
+			if (right >= mFilenames.size() || left >= mFilenames.size()) return false;
+			mPairs.push_back(Match(right,left));
 		}
 	}
 	input.close();
@@ -321,23 +364,49 @@ void BundlerMatcher::matchSiftFeature(int fileIndexA, int fileIndexB)
 	SiftKeyPoints pointsB           = mFeatureInfos[fileIndexB].points;
 	SiftKeyDescriptors descriptorsB = mFeatureInfos[fileIndexB].descriptors;
 
+	//If there are too many points all points dont get processed, break up the
+	//matching process
 	int max_size = std::max((int) pointsA.size(),(int) pointsB.size());
 
-	mMatcher->SetDescriptors(0, (int) pointsA.size(), &descriptorsA[0]);
-	mMatcher->SetDescriptors(1, (int) pointsB.size(), &descriptorsB[0]);
-	
-	int (*matchBuffer)[2] = new int[max_size][2];
+	int iter_matches = (max_size/MATCH_BUFFER) + 1;
 
-	//This stage can be farmed off to a remote GPU
-	mMatcher->SetMaxSift(max_size);
-	int nbMatch = mMatcher->GetSiftMatch(max_size, matchBuffer, mDistanceThreshold, mRatioThreshold);
+	max_size = std::min(max_size,MATCH_BUFFER);
 
 	//Save Match in RAM
-	std::vector<Match> matches(nbMatch);
-	for (int i=0; i<nbMatch; ++i)
-		matches[i] = Match(matchBuffer[i][0], matchBuffer[i][1]);
+	std::vector<Match> matches;
+	int asize = pointsA.size();
+	int bsize = pointsB.size();
+
+	for(int i = 0 ; i < iter_matches; i++)
+	{
+		for(int j = 0 ; j < iter_matches; j++)
+		{
+			int astart = asize*i/iter_matches;
+			int aend = asize*(i+1)/iter_matches;
+			int bstart = bsize*j/iter_matches;
+			int bend = bsize*(j+1)/iter_matches;
+			
+			int alen = aend - astart;
+			int blen = bend - bstart;
+
+			mMatcher->SetDescriptors(0, alen , &descriptorsA[0+astart*128]);
+			mMatcher->SetDescriptors(1, blen , &descriptorsB[0+bstart*128]);
+	
+			int (*matchBuffer)[2] = new int[max_size][2];
+
+			//This stage can be farmed off to a remote GPU
+			mMatcher->SetMaxSift(max_size);
+			int nbMatch = mMatcher->GetSiftMatch(max_size, matchBuffer, mDistanceThreshold, mRatioThreshold);
+
+			
+			for (int i=0; i<nbMatch; ++i)
+				matches.push_back(Match(matchBuffer[i][0]+astart, matchBuffer[i][1]+bstart));
+
+			delete[] matchBuffer;
+		}
+	}
+
 	mMatchInfos.push_back(MatchInfo(fileIndexA, fileIndexB, matches));
-	delete[] matchBuffer;
 }
 
 int BundlerMatcher::readAsciiKeyFile(int fileIndex)

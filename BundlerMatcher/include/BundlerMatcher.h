@@ -30,10 +30,14 @@
 
 #include "SiftGPU.h"
 
-typedef std::vector<SiftGPU::SiftKeypoint> SiftKeyPoints;
-typedef std::vector<float> SiftKeyDescriptors;
+//GPU Buffer usage for large key-point set matching
+#define MATCH_BUFFER 24576
 
 typedef std::pair<unsigned int, unsigned int> Match;
+
+typedef std::vector<SiftGPU::SiftKeypoint> SiftKeyPoints;
+typedef std::vector<float> SiftKeyDescriptors;
+typedef std::vector<Match> Pairs;
 
 struct MatchInfo
 {
@@ -70,11 +74,12 @@ class BundlerMatcher
 	public:
 		BundlerMatcher(float distanceThreshold, float ratioThreshold, int firstOctave = 1,
 			bool binaryWritingEnabled = false, bool sequenceMatching = false, int sequenceMatchingLength = 5,
-			bool tileMatching = false, int tileNum = 1);
+			bool tileMatching = false, int tileNum = 1, bool pairMatchingEnabled = false);
 		~BundlerMatcher();
 		 
 		//load list.txt and output gpu.matches.txt + one key file per pictures
-		void open(const std::string& inputPath, const std::string& inputFilename, const std::string& outMatchFilename);
+		void open(const std::string& inputPath, const std::string& inputFilename, const std::string& outMatchFilename, 
+			const std::string& pairsFilename);
 
 	protected:
 		
@@ -90,6 +95,7 @@ class BundlerMatcher
 
 		//Helpers
 		bool parseListFile(const std::string& filename);
+		bool parsePairsFile(const std::string& filename);
 		bool keyAsciiExists(const std::string& imagefile);
 		bool keyBinaryExists(const std::string& imagefile);
 		void clearScreen();
@@ -102,6 +108,8 @@ public:
 		int                      mSequenceMatchingLength;
 		bool					 mTiledMatchingEnabled;
 		int						 mTileNum;
+		bool					 mPairedMatchingEnabled;
+		Pairs					 mPairs;
 		SiftGPU*                 mSift;
 		SiftMatchGPU*            mMatcher;
 		//int                      mMatchBuffer[4096][2];

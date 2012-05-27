@@ -37,6 +37,7 @@ int main(int argc, char* argv[])
 		std::cout << "		-> example: sequence 3 (will match image N with N+1,N+2,N+3)" <<std::endl;
 		std::cout << "  - tile NUMBER: break image up in NUMBER of tiles in Width and Height" << std::endl;
 		std::cout << "      -> example: tile 2 (will divide image into 4 tiles)" << std::endl;
+		std::cout << "  - pairs pairfile.txt: pairwise matching only using the pairs supplied" << std::endl;
 		std::cout << "Example: " << argv[0] << " your_folder/ list.txt gpu.matches.txt 0.6 0.8 1" << std::endl;
 
 		return -1;
@@ -47,6 +48,8 @@ int main(int argc, char* argv[])
 	int  sequenceMatchingLength = 0;
 	bool tileMatching = false;
 	int tileNum = 1;
+	int pairMatching = false;
+	std::string pairfile = "";
 
 	for (int i=1; i<argc; ++i)
 	{
@@ -73,11 +76,26 @@ int main(int argc, char* argv[])
 				i++;
 			}
 		}
+		else if (current == "pairs")
+		{
+			if (i+1<argc)
+			{				
+				pairfile = std::string(argv[i+1]);
+				pairMatching = true;
+				i++;
+			}
+		}
+	}
+
+	if(pairMatching && sequenceMatching)
+	{
+		std::cerr << "Can not enable both paired matching and sequence matching" << std::endl;
+		return 1;
 	}
 
 	BundlerMatcher matcher((float) atof(argv[4]),(float) atof(argv[5]), atoi(argv[6]), binnaryWritingEnabled,
-		sequenceMatching, sequenceMatchingLength, tileMatching, tileNum);
-	matcher.open(std::string(argv[1]), std::string(argv[2]), std::string(argv[3]));
+		sequenceMatching, sequenceMatchingLength, tileMatching, tileNum, pairMatching);
+	matcher.open(std::string(argv[1]), std::string(argv[2]), std::string(argv[3]),pairfile);
 	
 	return 0;
 }
