@@ -74,7 +74,7 @@ class BundlerMatcher
 	public:
 		BundlerMatcher(float distanceThreshold, float ratioThreshold, int firstOctave = 1,
 			bool binaryWritingEnabled = false, bool sequenceMatching = false, int sequenceMatchingLength = 5,
-			bool tileMatching = false, int tileNum = 1, bool pairMatchingEnabled = false);
+			bool tileMatching = false, int tileNum = 1, float tilePercent = 1.0, bool pairMatchingEnabled = false);
 		~BundlerMatcher();
 		 
 		//load list.txt and output gpu.matches.txt + one key file per pictures
@@ -108,6 +108,7 @@ public:
 		int                      mSequenceMatchingLength;
 		bool					 mTiledMatchingEnabled;
 		int						 mTileNum;
+		float					 mTilePercent;
 		bool					 mPairedMatchingEnabled;
 		Pairs					 mPairs;
 		SiftGPU*                 mSift;

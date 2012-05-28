@@ -36,7 +36,7 @@
 #include <IL/il.h>
 
 BundlerMatcher::BundlerMatcher(float distanceThreshold, float ratioThreshold, int firstOctave, bool binaryWritingEnabled,
-	bool sequenceMatching, int sequenceMatchingLength, bool tileMatching, int tileNum, bool pairsMatchingEnabled)
+	bool sequenceMatching, int sequenceMatchingLength, bool tileMatching, int tileNum, float tilePercent, bool pairsMatchingEnabled)
 {
 	mBinaryKeyFileWritingEnabled = binaryWritingEnabled;
 	mSequenceMatchingEnabled     = sequenceMatching;
@@ -44,6 +44,7 @@ BundlerMatcher::BundlerMatcher(float distanceThreshold, float ratioThreshold, in
 	mTiledMatchingEnabled = tileMatching;
 	mTileNum = tileNum;
 	mPairedMatchingEnabled = pairsMatchingEnabled;
+	mTilePercent = tilePercent;
 
 	//DevIL init
 	ilInit();
@@ -135,7 +136,7 @@ void BundlerMatcher::open(const std::string& inputPath, const std::string& input
 		{				
 			int nbFeature = extractSiftFeature(i);
 			featuresum += nbFeature;
-			int totalRAM = (featuresum*mFilenames.size())/((i+1)*2097152);
+			unsigned int totalRAM = (featuresum*(int)mFilenames.size())/((i+1)*2097152);
 			saveAsciiKeyFile(i);
 			if (mBinaryKeyFileWritingEnabled)
 				saveBinaryKeyFile(i);
@@ -148,7 +149,7 @@ void BundlerMatcher::open(const std::string& inputPath, const std::string& input
 			//TODO: What about binary key files ?
 			int nbFeature = readAsciiKeyFile(i);
 			featuresum += nbFeature;
-			int totalRAM = (featuresum*mFilenames.size())/((i+1)*2097152);
+			unsigned int totalRAM = (featuresum*(int)mFilenames.size())/((i+1)*2097152);
 			clearScreen();
 			std::cout << "[Reading Sift Key files: ("<<totalRAM<< "GB) "<< percent << "%] - ("<<i+1<<"/"<<mFilenames.size()<<") #" << nbFeature <<" features";
 		}
@@ -301,10 +302,13 @@ int BundlerMatcher::extractSiftFeature(int fileIndex)
 				//If the image is too large use ilCopyPixels to internal buffers
 				//to copy subset of images to CPU RAM and call RunSIFT in a loop
 				//which does not choke the Graphics RAM
-				ILubyte* data = (ILubyte*)malloc(wtile*htile*sizeof(ILubyte));
-				ilCopyPixels(woff,hoff,0,wtile,htile,1,IL_LUMINANCE,IL_UNSIGNED_BYTE,data);
+				int wactual = std::min((int)(w-woff),(int)(wtile*mTilePercent));
+				int hactual = std::min((int)(h-hoff),(int)(htile*mTilePercent));
 
-				if (mSift->RunSIFT(wtile, htile, data, IL_LUMINANCE, GL_UNSIGNED_BYTE))
+				ILubyte* data = (ILubyte*)malloc(wactual*hactual*sizeof(ILubyte));
+				ilCopyPixels(woff,hoff,0,wactual,hactual,1,IL_LUMINANCE,IL_UNSIGNED_BYTE,data);
+
+				if (mSift->RunSIFT(wactual, hactual, data, IL_LUMINANCE, GL_UNSIGNED_BYTE))
 				{
 					int num = mSift->GetFeatureNum();
 
@@ -374,8 +378,8 @@ void BundlerMatcher::matchSiftFeature(int fileIndexA, int fileIndexB)
 
 	//Save Match in RAM
 	std::vector<Match> matches;
-	int asize = pointsA.size();
-	int bsize = pointsB.size();
+	int asize = (int)pointsA.size();
+	int bsize = (int)pointsB.size();
 
 	for(int i = 0 ; i < iter_matches; i++)
 	{
@@ -420,8 +424,8 @@ int BundlerMatcher::readAsciiKeyFile(int fileIndex)
 	std::string tmp = filepath.str();
 	char* filename = &tmp[0];
 
-	int num = 0; 
-	int descCount = 0;
+	unsigned int num = 0; 
+	unsigned int descCount = 0;
 
 	if(ilLoadImage(filename))
 	{
@@ -455,11 +459,13 @@ int BundlerMatcher::readAsciiKeyFile(int fileIndex)
 				input >> std::setprecision(2) >> info.points[i].x ;
 				input >> std::setprecision(3) >> info.points[i].s ;
 				input >> std::setprecision(3) >> info.points[i].o ;
+				
+				unsigned int feature;
+
 				for (int k=0; k<128; ++k, ++pd)
 				{
-					unsigned int feature;
 					input >> feature;
-					*pd = (((float)feature)/512.0f)-0.5;		
+					*pd = (((float)feature)/512.0f)-0.5f;		
 				}
 			}
 
