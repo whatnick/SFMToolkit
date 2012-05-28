@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 	int  sequenceMatchingLength = 0;
 	bool tileMatching = false;
 	int tileNum = 1;
-	int pairMatching = false;
+	bool pairMatching = false;
 	std::string pairfile = "";
 
 	for (int i=1; i<argc; ++i)
